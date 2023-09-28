@@ -3,6 +3,7 @@
 
 import asyncio
 import logging
+import re
 from typing import Dict, List, Optional, Sequence, Tuple
 
 from llama_index.async_utils import run_async_tasks
@@ -128,6 +129,9 @@ class GPTTreeIndexBuilder:
             self._docstore.add_documents([new_node], allow_update=False)
         return new_node_dict
 
+    def clean_summary(self, summary):
+        return re.sub(r'.{,20}voici .{,20}résumé.{,100}?:\s+', '', summary, flags=re.IGNORECASE)
+
     def build_index_from_nodes(
         self,
         index_graph: IndexGraph,
@@ -136,7 +140,7 @@ class GPTTreeIndexBuilder:
         level: int = 0,
     ) -> IndexGraph:
         """Consolidates chunks recursively, in a bottoms-up fashion."""
-        if len(cur_node_ids) <= self.num_children:
+        if len(cur_node_ids) <= 1:
             index_graph.root_nodes = cur_node_ids
             return index_graph
 
@@ -159,7 +163,7 @@ class GPTTreeIndexBuilder:
                     show_progress=self._show_progress,
                     progress_bar_desc="Generating summaries",
                 )
-                summaries = [output[0] for output in outputs]
+                summaries = [self.clean_summary(output) for output in outputs]
             else:
                 text_chunks_progress = get_tqdm_iterable(
                     text_chunks,
@@ -167,8 +171,10 @@ class GPTTreeIndexBuilder:
                     desc="Generating summaries",
                 )
                 summaries = [
-                    self._service_context.llm_predictor.predict(
-                        self.summary_prompt, context_str=text_chunk
+                    self.clean_summary(
+                        self._service_context.llm_predictor.predict(
+                            self.summary_prompt, context_str=text_chunk
+                        )
                     )
                     for text_chunk in text_chunks_progress
                 ]
@@ -185,7 +191,7 @@ class GPTTreeIndexBuilder:
 
         index_graph.root_nodes = new_node_dict
 
-        if len(new_node_dict) <= self.num_children:
+        if len(new_node_dict) <= 1:
             return index_graph
         else:
             return self.build_index_from_nodes(

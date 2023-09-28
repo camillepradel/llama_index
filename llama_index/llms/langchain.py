@@ -127,8 +127,8 @@ class LangChainLLM(LLM):
 
     @llm_completion_callback()
     async def acomplete(self, prompt: str, **kwargs: Any) -> CompletionResponse:
-        # TODO: Implement async complete
-        return self.complete(prompt, **kwargs)
+        output_str = await self._llm.apredict(prompt, **kwargs)
+        return CompletionResponse(text=output_str)
 
     @llm_chat_callback()
     async def astream_chat(
