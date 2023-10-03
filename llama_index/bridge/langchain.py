@@ -1,7 +1,8 @@
 import langchain
 
 # prompts
-from langchain import BasePromptTemplate, PromptTemplate
+from langchain.prompts import PromptTemplate
+from langchain.schema.prompt_template import BasePromptTemplate
 from langchain.agents import AgentExecutor, AgentType, initialize_agent
 
 # agents and tools
@@ -47,9 +48,6 @@ from langchain.schema import (
     LLMResult,
     SystemMessage,
 )
-
-# misc
-from langchain.sql_database import SQLDatabase
 
 # input & output
 from langchain.text_splitter import RecursiveCharacterTextSplitter, TextSplitter
@@ -102,7 +100,6 @@ __all__ = [
     "BaseMessage",
     "LLMResult",
     "ChatGeneration",
-    "SQLDatabase",
     "GPTCache",
     "BaseCache",
     "Document",
